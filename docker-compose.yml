@@ -1,0 +1,88 @@
+version: '3.9'
+
+
+networks:
+  demo:
+    driver: bridge
+
+
+
+services:
+
+  postgres:
+    image: postgres:15.3
+    restart: always
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_PASSWORD: a123456789
+      POSTGRES_DB: demo
+    volumes:
+      - ./data/initdb.sql:/docker-entrypoint-initdb.d/initdb.sql
+    networks:
+      - demo
+
+
+  pgadmin:
+    image: dpage/pgadmin4:7.4
+    restart: always
+    ports:
+      - 5050:80
+    environment:
+      PGADMIN_DEFAULT_EMAIL: test@test.com
+      PGADMIN_DEFAULT_PASSWORD: a123456789
+    volumes:
+      - ./data/servers.json:/pgadmin4/servers.json
+    depends_on:
+      - postgres
+    networks:
+      - demo
+
+
+  redis:
+    image: redis:7.0.11
+    restart: always
+    ports:
+      - 6379:6379
+    networks:
+      - demo
+
+
+  api-1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: technobre/demo-api:latest
+    container_name: demo-api-1
+    environment:
+      CONNECTIONSTRINGS__POSTGRES: Server=postgres;Port=5432;Database=demo;User Id=postgres;Password=a123456789
+      CONNECTIONSTRINGS__REDIS: redis:6379
+    depends_on:
+    - postgres
+    - redis
+    networks:
+      - demo
+
+  api-2:
+    image: technobre/demo-api:latest
+    container_name: demo-api-2
+    environment:
+      CONNECTIONSTRINGS__POSTGRES: Server=postgres;Port=5432;Database=demo;User Id=postgres;Password=a123456789
+      CONNECTIONSTRINGS__REDIS: redis:6379
+    networks:
+      - demo
+    depends_on:
+    - api-1
+
+
+  nginx:
+    image: nginx:1.25.1
+    ports:
+      - "9002:80"
+    volumes:
+      - ./src/nginx.conf:/etc/nginx/nginx.conf
+    networks:
+      - demo
+    depends_on:
+    - api-1
+    - api-2

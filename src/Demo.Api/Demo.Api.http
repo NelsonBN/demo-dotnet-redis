@@ -1,0 +1,39 @@
+@host = http://localhost:5000
+@endpoint = products
+
+###
+
+GET {{host}}/{{endpoint}}
+Accept: application/json
+
+###
+
+GET {{host}}/{{endpoint}}/2
+Accept: application/json
+
+###
+
+POST {{host}}/{{endpoint}}
+Content-Type: application/json
+
+{
+    "name": "Product 1",
+    "price": 100,
+    "quantity": 10
+}
+
+###
+
+PUT {{host}}/{{endpoint}}/2
+Content-Type: application/json
+
+{
+    "name": "Product 1",
+    "price": 100,
+    "quantity": 10
+}
+
+###
+
+DELETE {{host}}/{{endpoint}}/1
+Content-Type: application/json
